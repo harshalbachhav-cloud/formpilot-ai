@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="A private, review-first assistant for drafting Google Forms feedback answers.">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>FormPilot AI</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1020;--panel:#121a2d;--panel2:#19243a;--text:#f4f7ff;--muted:#aab7d0;--line:#2a3854;--blue:#7c9cff;--mint:#73e0c0;--warn:#ffd479}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b2a49 0,#0b1020 52%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    main{max-width:850px;margin:0 auto;padding:22px 16px 60px}
+    header{display:flex;align-items:center;gap:12px;margin:8px 0 24px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#8ba7ff,#6ee7c0);display:grid;place-items:center;color:#10172a;font-size:25px;font-weight:900}
+    h1{font-size:1.55rem;margin:0;letter-spacing:-.03em}header p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+    .pill{display:inline-block;border:1px solid #38506b;border-radius:99px;padding:3px 9px;color:var(--mint);font-size:.76rem;margin-top:5px}
+    .card{background:rgba(18,26,45,.94);border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 12px 34px #0002}
+    h2{font-size:1.06rem;margin:0 0 12px}label{display:block;font-weight:650;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #3a4965;border-radius:12px;padding:12px 13px;background:#0d1526;color:var(--text);font:inherit;outline:none}textarea{min-height:94px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #7c9cff22}
+    button,.button{border:0;border-radius:12px;padding:12px 15px;font:inherit;font-weight:750;cursor:pointer;background:var(--blue);color:#0b1020;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+    button.secondary,.button.secondary{background:#25334d;color:var(--text);border:1px solid #40516e}button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}button:disabled{opacity:.4;cursor:not-allowed}
+    .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.small{color:var(--muted);font-size:.88rem}.notice{padding:12px 14px;background:#17253b;border-left:3px solid var(--mint);border-radius:10px;color:#dce8ff;font-size:.9rem}
+    .warn{border-left-color:var(--warn)}.question{border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0;background:#0d1526}.qhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.tag{font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:2px 8px;white-space:nowrap}
+    .checkrow{display:flex;gap:9px;align-items:center;margin-top:10px;color:var(--mint);font-size:.9rem}.checkrow input{width:auto}
+    .hidden{display:none!important}.footer{color:var(--muted);font-size:.8rem;text-align:center;margin-top:26px}.status{min-height:22px;color:var(--mint);font-size:.9rem;margin-top:8px}
+    @media(min-width:650px){.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{padding:22px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">F</div>
+    <div><h1>FormPilot AI</h1><p>Your review-first Google Forms companion</p><span class="pill">Free starter · Privacy-first</span></div>
+  </header>
+
+  <section class="card">
+    <h2>1 · Open your Google Form</h2>
+    <p class="small">Paste a form link shared in your class group. This app opens the form for you. For privacy and browser security, it does not secretly read form contents.</p>
+    <label for="formUrl">Google Forms link</label>
+    <input id="formUrl" type="url" placeholder="https://docs.google.com/forms/.../viewform" autocomplete="url">
+    <div class="actions"><button id="openForm">↗ Open form</button><button class="secondary" id="pasteQuestions">I opened it, help me draft answers ↓</button></div>
+    <div class="status" id="urlStatus" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="profileCard">
+    <h2>2 · Add optional context</h2>
+    <p class="small">Use only details that are relevant. Don't add passwords, private IDs, or facts you don't want stored on this device.</p>
+    <div class="split">
+      <div><label for="language">Answer language</label><select id="language"><option>English</option><option>Marathi</option><option>Hindi</option></select></div>
+      <div><label for="tone">Writing style</label><select id="tone"><option value="simple">Simple and concise</option><option value="formal">Polite and formal</option><option value="veryshort">Very short</option></select></div>
+    </div>
+    <label for="context">Optional context (course, event, topic)</label>
+    <input id="context" placeholder="e.g. first-year civil engineering feedback">
+  </section>
+
+  <section class="card" id="draftCard">
+    <h2>3 · Add questions and prepare draft answers</h2>
+    <div class="notice warn">This starter does not connect to a paid AI service. It creates cautious editable templates. Ratings and personal opinions must come from you. For automatic question reading and stronger AI drafts, a backend/model integration is needed.</div>
+    <label for="questions">Paste the form questions (one question per line)</label>
+    <textarea id="questions" placeholder="What did you like about the session?&#10;What could be improved?&#10;Rate the overall experience"></textarea>
+    <div class="actions"><button id="makeDrafts">✦ Prepare draft answers</button><button class="secondary" id="clearAll">Clear</button></div>
+    <div id="draftList"></div>
+  </section>
+
+  <section class="card">
+    <h2>4 · Copy answers and review</h2>
+    <p class="small">Approve only answers that reflect your real experience. Copy each answer into the corresponding form field. Final submission stays in your hands.</p>
+    <div class="actions"><button id="copyApproved">Copy approved answers</button><button class="secondary" id="downloadTxt">Export answers (.txt)</button></div>
+    <textarea id="compiled" placeholder="Approved answers will appear here in question order." readonly></textarea>
+    <div class="status" id="copyStatus" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Install on your phone</h2>
+    <p class="small">After this app is hosted on a secure HTTPS website, open that address in Android Chrome and choose <b>⋮ → Add to Home screen</b> or <b>Install app</b>. This ZIP alone is not yet hosted, so installation will be available after deployment.</p>
+    <div class="actions"><button class="secondary" id="installBtn" hidden>Install FormPilot AI</button><button class="ghost" id="howInstall">Show install steps</button></div>
+    <p class="small hidden" id="installHelp">Android: publish the app to an HTTPS host, open the published URL in Chrome, tap ⋮, then choose Install app or Add to Home screen. On Windows, open the same URL in Chrome or Edge and use the install icon or browser menu.</p>
+  </section>
+  <p class="footer">FormPilot AI starter · Answers stay in this browser session unless you export them · Never submits a form automatically</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let drafts = [];
+let installPrompt = null;
+
+function validFormUrl(v){try{const u=new URL(v);return u.protocol==='https:'&&u.hostname==='docs.google.com'&&u.pathname.startsWith('/forms/')&&u.pathname.includes('viewform')}catch{return false}}
+$('openForm').addEventListener('click',()=>{
+  const v=$('formUrl').value.trim();
+  if(!validFormUrl(v)){$('urlStatus').textContent='Please paste a valid Google Forms responder link.';return}
+  $('urlStatus').textContent='Opening the form in a new tab. Review its questions, then return here and paste them below.';
+  window.open(v,'_blank','noopener,noreferrer');
+});
+$('pasteQuestions').addEventListener('click',()=>{$('questions').focus();$('draftCard').scrollIntoView({behavior:'smooth'});});
+function draftFor(q, lang, tone, context){
+  const s=q.toLowerCase();
+  const rating=/rate|rating|scale|satisfied|satisfaction|how would you score|excellent|poor/.test(s);
+  const personal=/name|roll number|email|phone|mobile|date of birth|attendance|marks|department|class|year/.test(s);
+  const opinion=/like|enjoy|good|best|experience|opinion|agree|disagree|teacher|faculty|session|suggest|improv|feedback|comment|recommend|challenge|learn/.test(s);
+  if(rating) return lang==='Marathi'?'तुमच्या खऱ्या अनुभवाप्रमाणे रेटिंग निवडा.':lang==='Hindi'?'अपने वास्तविक अनुभव के अनुसार रेटिंग चुनें.':'Choose a rating that reflects your actual experience.';
+  if(personal) return lang==='Marathi'?'तुमची अचूक माहिती स्वतः भरा.':lang==='Hindi'?'अपनी सही जानकारी स्वयं भरें.':'Enter your accurate personal details yourself.';
+  if(/improv|suggest|recommend|what could|how can/.test(s)){
+    if(lang==='Marathi')return 'माझ्या अनुभवाच्या आधारे, सूचना अधिक स्पष्टपणे मांडणे आणि प्रश्नांसाठी वेळ देणे उपयुक्त ठरेल. (तुमच्या अनुभवाप्रमाणे संपादित करा.)';
+    if(lang==='Hindi')return 'मेरे अनुभव के आधार पर, निर्देशों को और स्पष्ट करना तथा प्रश्नों के लिए समय देना उपयोगी होगा. (अपने अनुभव के अनुसार संपादित करें.)';
+    return tone==='veryshort'?'Clearer instructions and more time for questions. (Edit to match your experience.)':'Consider making the instructions clearer and allowing enough time for questions. Please edit this to reflect your actual experience.';
+  }
+  if(/like|enjoy|best|positive|what went well|learn/.test(s)){
+    if(lang==='Marathi')return 'सत्रातील विषय उपयुक्त वाटले. (तुमच्या प्रत्यक्ष अनुभवाशी जुळत असल्यासच वापरा.)';
+    if(lang==='Hindi')return 'सत्र के विषय उपयोगी लगे. (केवल तभी उपयोग करें जब यह आपके वास्तविक अनुभव से मेल खाता हो.)';
+    return 'The topics covered were useful and relevant. Use this only if it matches your actual experience.';
+  }
+  if(opinion) return lang==='Marathi'?'तुमचे खरे मत येथे लिहा.':lang==='Hindi'?'अपनी वास्तविक राय यहाँ लिखें.':'Write your honest opinion here.';
+  return lang==='Marathi'?'प्रश्नानुसार तुमचे उत्तर स्वतः लिहा.':lang==='Hindi'?'प्रश्न के अनुसार अपना उत्तर स्वयं लिखें.':'Write an answer based on your own experience and the question.';
+}
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$('makeDrafts').addEventListener('click',()=>{
+  const qs=$('questions').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  if(!qs.length){$('draftList').innerHTML='<p class="small">Paste at least one question first.</p>';return}
+  drafts=qs.map(q=>({q,answer:draftFor(q,$('language').value,$('tone').value,$('context').value),approved:false}));
+  renderDrafts();
+});
+function renderDrafts(){
+  $('draftList').innerHTML=drafts.map((d,i)=>`<div class="question"><div class="qhead"><strong>Q${i+1}. ${esc(d.q)}</strong><span class="tag">Draft</span></div><label for="a${i}">Suggested answer</label><textarea id="a${i}">${esc(d.answer)}</textarea><label class="checkrow"><input type="checkbox" id="ok${i}" ${d.approved?'checked':''}> I reviewed and approve this answer</label></div>`).join('');
+  drafts.forEach((d,i)=>{$('a'+i).addEventListener('input',e=>{drafts[i].answer=e.target.value;updateCompiled()});$('ok'+i).addEventListener('change',e=>{drafts[i].approved=e.target.checked;updateCompiled()});});
+  updateCompiled();
+}
+function updateCompiled(){ $('compiled').value=drafts.filter(d=>d.approved).map((d)=>`${d.q}\n${d.answer}`).join('\n\n');}
+$('copyApproved').addEventListener('click',async()=>{updateCompiled();if(!$('compiled').value){$('copyStatus').textContent='Approve at least one answer first.';return}try{await navigator.clipboard.writeText($('compiled').value);$('copyStatus').textContent='Approved answers copied.'}catch{$('compiled').focus();$('compiled').select();$('copyStatus').textContent='Select the text and copy it manually.'}});
+$('downloadTxt').addEventListener('click',()=>{updateCompiled();if(!$('compiled').value){$('copyStatus').textContent='Approve at least one answer first.';return}const b=new Blob([$('compiled').value],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='formpilot-approved-answers.txt';a.click();URL.revokeObjectURL(a.href)});
+$('clearAll').addEventListener('click',()=>{$('questions').value='';$('draftList').innerHTML='';$('compiled').value='';drafts=[];$('copyStatus').textContent='Cleared.'});
+$('howInstall').addEventListener('click',()=>{$('installHelp').classList.toggle('hidden')});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn').hidden=false});
+$('installBtn').addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn').hidden=true});
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
